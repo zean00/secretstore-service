@@ -160,6 +160,8 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	function deleteDocumentKeyStoreRequest(bytes32 serverKeyId) public only_owner {
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
 		clearDocumentKeyStoreRequest(serverKeyId, request);
+
+		DocumentKeyStoreError(serverKeyId);
 	}
 
 	// === Internal methods ===

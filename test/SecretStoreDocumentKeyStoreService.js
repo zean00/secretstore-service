@@ -306,6 +306,20 @@ contract('DocumentKeyStoreService', function(accounts) {
 
     // Administrative API tests
 
+    it("should be able to change owner by current owner", () => Promise
+      .resolve(initializeKeyServerSet(setContract))
+      .then(() => serviceContract.setOwner(nonKeyServer))
+      .then(() => serviceContract.setDocumentKeyStoreFee(10, { from: nonKeyServer }))
+      .then(() => serviceContract.setDocumentKeyStoreFee(20))
+      .then(() => assert(false, "supposed to fail"), () => {})
+    );
+
+    it("should not be able to change owner by non-current owner", () => Promise
+      .resolve(initializeKeyServerSet(setContract))
+      .then(() => serviceContract.setOwner(nonKeyServer, { from: server2.address }))
+      .then(() => assert(false, "supposed to fail"), () => {})
+    );
+
     it("should be able to change fee", () => Promise
       .resolve(initializeKeyServerSet(setContract))
       .then(() => serviceContract.setDocumentKeyStoreFee(10))
@@ -357,6 +371,12 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(() => serviceContract.documentKeyStoreRequestsCount())
       .then(c => assert.equal(c, 2))
       .then(() => serviceContract.deleteDocumentKeyStoreRequest("0x0000000000000000000000000000000000000000000000000000000000000002"))
+      .then(receipt => assert.web3Event(receipt, {
+        event: 'DocumentKeyStoreError',
+        args: {
+          serverKeyId: "0x0000000000000000000000000000000000000000000000000000000000000002"
+        }
+      }, 'Event is emitted'))
       .then(() => serviceContract.documentKeyStoreRequestsCount())
       .then(c => assert.equal(c, 1))
     );

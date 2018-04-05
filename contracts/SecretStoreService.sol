@@ -1,5 +1,3 @@
-// TODO: fire error event in admin delete
-
 //! The Secret Store service contract intefaces.
 //!
 //! Copyright 2017 Svyatoslav Nikolsky, Parity Technologies Ltd.

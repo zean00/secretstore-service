@@ -318,6 +318,8 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		bytes32 retrievalId = keccak256(serverKeyId, requester);
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
+
+		DocumentKeyShadowRetrievalError(serverKeyId, requester);
 	}
 
 	// === Internal methods ===

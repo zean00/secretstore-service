@@ -385,7 +385,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .resolve(initializeKeyServerSet(setContract))
       .then(() => serviceContract.setOwner(nonKeyServer))
       .then(() => serviceContract.setServerKeyGenerationFee(10, { from: nonKeyServer }))
-      .then(() => serviceContract.setServerKeyGenerationFee(10))
+      .then(() => serviceContract.setServerKeyGenerationFee(20))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 

@@ -596,7 +596,7 @@ contract('ServerKeyRetrievalService', function(accounts) {
       .resolve(initializeKeyServerSet(setContract))
       .then(() => serviceContract.setOwner(nonKeyServer))
       .then(() => serviceContract.setServerKeyRetrievalFee(10, { from: nonKeyServer }))
-      .then(() => serviceContract.setServerKeyRetrievalFee(10))
+      .then(() => serviceContract.setServerKeyRetrievalFee(20))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
