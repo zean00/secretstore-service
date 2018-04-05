@@ -23,15 +23,17 @@ contract('ServerKeyGenerationService', function(accounts) {
     server3.address = accounts[2];
     server3.public = recoverPublic(accounts[2]);
 
-    contract.addKeyServer(server1.public, server1.ip);
-    contract.addKeyServer(server2.public, server2.ip);
+    return Promise.try(() => contract.addKeyServer(server1.public, server1.ip))
+      .then(() => contract.addKeyServer(server2.public, server2.ip))
+      .then(() => Promise.resolve(contract));
   }
 
   function initializeKeyServerSetSingle(contract) {
     server1.address = accounts[0];
     server1.public = recoverPublic(accounts[0]);
 
-    contract.addKeyServer(server1.public, server1.ip);
+    return Promise.try(() => contract.addKeyServer(server1.public, server1.ip))
+      .then(() => Promise.resolve(contract));
   }
 
   describe("ServerKeyGenerationService", () => {
@@ -46,14 +48,12 @@ contract('ServerKeyGenerationService', function(accounts) {
 
     // SecretStoreServiceBase tests
 
-    it("should reject direct payments", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject direct payments", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.sendTransaction({ value: 100 }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should return correct value from keyServersCount", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return correct value from keyServersCount", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.keyServersCount())
       .then(c => assert.equal(2, c))
       .then(() => setContract.addKeyServer(server3.public, server3.ip))
@@ -61,8 +61,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(c => assert.equal(3, c))
     );
 
-    it("should return correct index from requireKeyServer", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return correct index from requireKeyServer", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.requireKeyServer(server1.address))
       .then(i => assert.equal(0, i))
       .then(() => serviceContract.requireKeyServer(server2.address))
@@ -71,14 +70,12 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not drain zero balance", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not drain zero balance", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.drain())
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should drain the balance of key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should drain the balance of key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.drain({ from: server2.address }))
@@ -88,8 +85,7 @@ contract('ServerKeyGenerationService', function(accounts) {
 
     // ServerKeyGenerationServiceClientApi tests
 
-    it("should accept server key generation request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should accept server key generation request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(receipt => assert.web3Event(receipt, {
@@ -102,28 +98,24 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should reject server key generation request when fee is not paid", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject server key generation request when fee is not paid", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001", 1))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject server key generation request when not enough fee paid", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject server key generation request when not enough fee paid", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(100, 'finney') }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject server key generation request when threshold is too large", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject server key generation request when threshold is too large", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         2, { value: web3.toWei(200, 'finney') }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject server key generation request when there are too many pending requests", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject server key generation request when there are too many pending requests", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         0, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -137,8 +129,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject duplicated server key generation request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject duplicated server key generation request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -148,8 +139,7 @@ contract('ServerKeyGenerationService', function(accounts) {
 
     // ServerKeyGenerationServiceKeyServerApi tests
 
-    it("should publish generated server key", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should publish generated server key", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -167,8 +157,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should not accept generated server key when it is not a valid public", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not accept generated server key when it is not a valid public", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -176,15 +165,13 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should ignore generated server key when there's no request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should ignore generated server key when there's no request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
         "0x00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
         { from: server1.address }))
     );
 
-    it("should not accept generated server key from non key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not accept generated server key from non key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -192,8 +179,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not publish server key if got second response from same key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not publish server key if got second response from same key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -205,8 +191,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(receipt => assert.equal(receipt.logs.length, 0))
     );
 
-    it("should raise generation error if two key servers are not agreed about generated server key", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should raise generation error if two key servers are not agreed about generated server key", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerated("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -223,8 +208,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should raise generation error if three key servers are not agreed about generated server key", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should raise generation error if three key servers are not agreed about generated server key", () => initializeKeyServerSet(setContract)
       .then(() => setContract.addKeyServer(server3.public, server3.ip))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
@@ -245,8 +229,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should raise generation error if at least one key server has reported an error", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should raise generation error if at least one key server has reported an error", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerationError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -259,8 +242,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should raise generation error if at least one key server has reported an error with 0-threshold", () => Promise
-      .resolve(initializeKeyServerSetSingle(setContract))
+    it("should raise generation error if at least one key server has reported an error with 0-threshold", () => initializeKeyServerSetSingle(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         0, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerationError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -273,8 +255,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should fail if generation error is reported be a non key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should fail if generation error is reported be a non key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.serverKeyGenerationError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -282,15 +263,13 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not raise generation error if no request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not raise generation error if no request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.serverKeyGenerationError("0x0000000000000000000000000000000000000000000000000000000000000001",
         { from: server1.address }))
       .then(receipt => assert.equal(receipt.logs.length, 0))
     );
 
-    it("should return pending requests", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return pending requests", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.serverKeyGenerationRequestsCount())
       .then(c => assert.equal(c, 0))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -313,8 +292,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       })
     );
 
-    it("should return if response is required", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return if response is required", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.isServerKeyGenerationResponseRequired("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -334,8 +312,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(isResponseRequired => assert.equal(isResponseRequired, true))
     );
 
-    it("should reset existing responses when servers set changes", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reset existing responses when servers set changes", () => initializeKeyServerSet(setContract)
       // request is created and single key server responds
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
@@ -381,35 +358,30 @@ contract('ServerKeyGenerationService', function(accounts) {
 
     // Administrative API tests
 
-    it("should be able to change owner by current owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change owner by current owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setOwner(nonKeyServer))
       .then(() => serviceContract.setServerKeyGenerationFee(10, { from: nonKeyServer }))
       .then(() => serviceContract.setServerKeyGenerationFee(20))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not be able to change owner by non-current owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change owner by non-current owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setOwner(nonKeyServer, { from: server2.address }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to change fee", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change fee", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setServerKeyGenerationFee(10))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(10, 'finney') }))
     );
 
-    it("should not be able to change fee by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change fee by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setServerKeyGenerationFee(10, { from: nonKeyServer }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to change requests limit", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change requests limit", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setMaxServerKeyGenerationRequests(5))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
@@ -423,14 +395,12 @@ contract('ServerKeyGenerationService', function(accounts) {
         1, { value: web3.toWei(200, 'finney') }))
     );
 
-    it("should not be able to change requests limit by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change requests limit by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setMaxServerKeyGenerationRequests(5, { from: nonKeyServer }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to delete request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to delete request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -448,8 +418,7 @@ contract('ServerKeyGenerationService', function(accounts) {
       .then(c => assert.equal(c, 1))
     );
 
-    it("should not be able to delete request by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to delete request by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.generateServerKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         1, { value: web3.toWei(200, 'finney') }))
       .then(() => serviceContract.deleteServerKeyGenerationRequest("0x0000000000000000000000000000000000000000000000000000000000000001",

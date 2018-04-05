@@ -25,8 +25,9 @@ contract('DocumentKeyStoreService', function(accounts) {
     server3.address = accounts[2];
     server3.public = recoverPublic(accounts[2]);
 
-    contract.addKeyServer(server1.public, server1.ip);
-    contract.addKeyServer(server2.public, server2.ip);
+    return Promise.try(() => contract.addKeyServer(server1.public, server1.ip))
+      .then(() => contract.addKeyServer(server2.public, server2.ip))
+      .then(() => Promise.resolve(contract));
   }
 
   describe("DocumentKeyStoreService", () => {
@@ -41,14 +42,12 @@ contract('DocumentKeyStoreService', function(accounts) {
 
     // SecretStoreServiceBase tests
 
-    it("should reject direct payments", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject direct payments", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.sendTransaction({ value: 100 }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should return correct value from keyServersCount", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return correct value from keyServersCount", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.keyServersCount())
       .then(c => assert.equal(2, c))
       .then(() => setContract.addKeyServer(server3.public, server3.ip))
@@ -56,8 +55,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(c => assert.equal(3, c))
     );
 
-    it("should return correct index from requireKeyServer", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return correct index from requireKeyServer", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.requireKeyServer(server1.address))
       .then(i => assert.equal(0, i))
       .then(() => serviceContract.requireKeyServer(server2.address))
@@ -66,14 +64,12 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not drain zero balance", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not drain zero balance", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.drain())
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should drain the balance of key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should drain the balance of key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.drain({ from: server2.address }))
@@ -83,8 +79,7 @@ contract('DocumentKeyStoreService', function(accounts) {
 
     // DocumentKeyStoreServiceClientApi tests
 
-    it("should accept document key store request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should accept document key store request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(receipt => assert.web3Event(receipt, {
@@ -98,22 +93,19 @@ contract('DocumentKeyStoreService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should reject document key store request when fee is not paid", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject document key store request when fee is not paid", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject document key store request when not enough fee paid", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject document key store request when not enough fee paid", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(50, 'finney') }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject document key store request when there are too many pending requests", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject document key store request when there are too many pending requests", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -135,8 +127,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should reject duplicated document key store request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reject duplicated document key store request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -146,8 +137,7 @@ contract('DocumentKeyStoreService', function(accounts) {
 
     // ServerKeyGenerationServiceKeyServerApi tests
 
-    it("should publish document key store confirmation", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should publish document key store confirmation", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.documentKeyStored("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -162,14 +152,12 @@ contract('DocumentKeyStoreService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should ignore document key store confirmation when there's no request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should ignore document key store confirmation when there's no request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.documentKeyStored("0x0000000000000000000000000000000000000000000000000000000000000001",
         { from: server1.address }))
     );
 
-    it("should not accept document key store confirmation from non key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not accept document key store confirmation from non key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.documentKeyStored("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -177,8 +165,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not publish document key store confirmation if got second response from same key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not publish document key store confirmation if got second response from same key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.documentKeyStored("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -188,8 +175,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(receipt => assert.equal(receipt.logs.length, 0))
     );
 
-    it("should raise store error if at least one key server has reported an error", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should raise store error if at least one key server has reported an error", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.documentKeyStoreError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -202,8 +188,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       }, 'Event is emitted'))
     );
 
-    it("should fail if store error is reported be a non key server", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should fail if store error is reported be a non key server", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.documentKeyStoreError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -211,15 +196,13 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not raise store error if no request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not raise store error if no request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.documentKeyStoreError("0x0000000000000000000000000000000000000000000000000000000000000001",
         { from: server1.address }))
       .then(receipt => assert.equal(receipt.logs.length, 0))
     );
 
-    it("should return pending requests", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return pending requests", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.documentKeyStoreRequestsCount())
       .then(c => assert.equal(c, 0))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -244,8 +227,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       })
     );
 
-    it("should return if response is required", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should return if response is required", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.isDocumentKeyStoreResponseRequired("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -264,8 +246,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(isResponseRequired => assert.equal(isResponseRequired, true))
     );
 
-    it("should reset existing responses when servers set changes", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should reset existing responses when servers set changes", () => initializeKeyServerSet(setContract)
       // request is created and single key server responds
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
@@ -306,35 +287,30 @@ contract('DocumentKeyStoreService', function(accounts) {
 
     // Administrative API tests
 
-    it("should be able to change owner by current owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change owner by current owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setOwner(nonKeyServer))
       .then(() => serviceContract.setDocumentKeyStoreFee(10, { from: nonKeyServer }))
       .then(() => serviceContract.setDocumentKeyStoreFee(20))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should not be able to change owner by non-current owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change owner by non-current owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setOwner(nonKeyServer, { from: server2.address }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to change fee", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change fee", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setDocumentKeyStoreFee(10))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(10, 'finney') }))
     );
 
-    it("should not be able to change fee by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change fee by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setDocumentKeyStoreFee(10, { from: nonKeyServer }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to change requests limit", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to change requests limit", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setMaxDocumentKeyStoreRequests(9))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
@@ -356,14 +332,12 @@ contract('DocumentKeyStoreService', function(accounts) {
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
     );
 
-    it("should not be able to change requests limit by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to change requests limit by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.setMaxDocumentKeyStoreRequests(9, { from: nonKeyServer }))
       .then(() => assert(false, "supposed to fail"), () => {})
     );
 
-    it("should be able to delete request", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should be able to delete request", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -381,8 +355,7 @@ contract('DocumentKeyStoreService', function(accounts) {
       .then(c => assert.equal(c, 1))
     );
 
-    it("should not be able to delete request by a non-owner", () => Promise
-      .resolve(initializeKeyServerSet(setContract))
+    it("should not be able to delete request by a non-owner", () => initializeKeyServerSet(setContract)
       .then(() => serviceContract.storeDocumentKey("0x0000000000000000000000000000000000000000000000000000000000000001",
         commonPoint1, encryptedPoint1, { value: web3.toWei(100, 'finney') }))
       .then(() => serviceContract.deleteDocumentKeyStoreRequest("0x0000000000000000000000000000000000000000000000000000000000000001",

@@ -42,11 +42,12 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     requester1 = requesterAddress1 = accounts[5];
     requesterPublic1 = recoverPublic(accounts[5]);
 
-    contract.addKeyServer(server1.public, server1.ip);
-    contract.addKeyServer(server2.public, server2.ip);
-    contract.addKeyServer(server3.public, server3.ip);
-    contract.addKeyServer(server4.public, server4.ip);
-    contract.addKeyServer(server5.public, server5.ip);
+    return Promise.try(() => contract.addKeyServer(server1.public, server1.ip))
+      .then(() => contract.addKeyServer(server2.public, server2.ip))
+      .then(() => contract.addKeyServer(server3.public, server3.ip))
+      .then(() => contract.addKeyServer(server4.public, server4.ip))
+      .then(() => contract.addKeyServer(server5.public, server5.ip))
+      .then(() => Promise.resolve(contract));
   }
 
   describe("DocumentKeyShadowRetrievalService", () => {
@@ -61,14 +62,12 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
   
   // SecretStoreServiceBase tests
 
-  it("should reject direct payments", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject direct payments", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.sendTransaction({ value: 100 }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should return correct value from keyServersCount", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should return correct value from keyServersCount", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.keyServersCount())
     .then(c => assert.equal(5, c))
     .then(() => setContract.removeKeyServer(server3.address))
@@ -76,8 +75,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(c => assert.equal(4, c))
   );
 
-  it("should return correct index from requireKeyServer", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should return correct index from requireKeyServer", () => initializeKeyServerSet(setContract)
     .then(() => setContract.removeKeyServer(server3.public, server3.ip))
     .then(() => serviceContract.requireKeyServer(server1.address))
     .then(i => assert.equal(0, i))
@@ -87,14 +85,12 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should not drain zero balance", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should not drain zero balance", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.drain())
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should drain the balance of key server", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should drain the balance of key server", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.drain({ from: server2.address }))
@@ -104,8 +100,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
 
   // DocumentKeyShadowRetrievalServiceClientApi tests
 
-  it("should accept document key shadow retriveal request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should accept document key shadow retriveal request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(receipt => assert.web3Event(receipt, {
@@ -117,36 +112,31 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     }, 'Event is emitted'))
   );
 
-  it("should reject document key shadow retrieval request with invalid public", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject document key shadow retrieval request with invalid public", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       "0xFF", { from: server1.address }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should reject document key shadow retrieval request with non-owned public", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject document key shadow retrieval request with non-owned public", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: server1.address, value: web3.toWei(200, 'finney') }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should reject document key shadow retrieval request when fee is not paid", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject document key shadow retrieval request when fee is not paid", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1 }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should reject document key shadow retrieval request when not enough fee paid", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject document key shadow retrieval request when not enough fee paid", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(100, 'finney') }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should reject document key shadow retrieval request when there are too many pending requests", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject document key shadow retrieval request when there are too many pending requests", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       server1.public, { from: server1.address, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -160,8 +150,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should reject duplicated document key shadow retrieval request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reject duplicated document key shadow retrieval request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -171,8 +160,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
 
   // DocumentKeyShadowRetrievalServiceKeyServerApi tests
 
-  it("should publish retrieved document key shadow if all servers respond with same value", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should publish retrieved document key shadow if all servers respond with same value", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     // 3-of-5 servers are required to respond with the same threshold value:
@@ -226,8 +214,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(c => assert.equal(c, 0))
   );
 
-  it("should publish retrieved document key common if some servers respond with different common values", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should publish retrieved document key common if some servers respond with different common values", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -258,8 +245,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     ))
   )
 
-  it("should fail document key common retrieval if no agreement on common values possible", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail document key common retrieval if no agreement on common values possible", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -279,22 +265,19 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     }))
   );
 
-  it("should ignore document key common if no active request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should ignore document key common if no active request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, commonPoint1, 1, { from: server1.address }))
     .then(receipt => assert.equal(receipt.logs.length, 0))
   );
 
-  it("should ignore document key personal if no active request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should ignore document key personal if no active request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.documentKeyPersonalRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, participants1, decryptedSecret1, shadow1, { from: server1.address }))
     .then(receipt => assert.equal(receipt.logs.length, 0))
   );
 
-  it("should fail if personal received before common is retrieved", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if personal received before common is retrieved", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyPersonalRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -302,8 +285,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should fail if second personal data is retrieved", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if second personal data is retrieved", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -319,8 +301,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should fail if common data is reported by a non-key server", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if common data is reported by a non-key server", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -328,8 +309,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should fail if personal data is reported by a non-key server", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if personal data is reported by a non-key server", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -343,8 +323,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should fail if personal data is reported by a wrong key server", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if personal data is reported by a wrong key server", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -359,15 +338,13 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should ignore document key retrieval error if no active request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should ignore document key retrieval error if no active request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, { from: server1.address }))
     .then(receipt => assert.equal(receipt.logs.length, 0))
   );
 
-  it("should fail if retrieval error is reported by a non key-server", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should fail if retrieval error is reported by a non key-server", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -375,8 +352,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should report document key shadow retrieval failure if common retrieval error is confirmed by 50%+1 servers", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should report document key shadow retrieval failure if common retrieval error is confirmed by 50%+1 servers", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -396,8 +372,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     }))
   );
 
-  it("should ignore private retrieval errror when reported twice", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should ignore private retrieval errror when reported twice", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -416,8 +391,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(receipt => assert.equal(receipt.logs.length, 0))
   );
 
-  it("should report document key shadow retrieval failure if private retrieval error is confirmed by t+1+1 servers", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should report document key shadow retrieval failure if private retrieval error is confirmed by t+1+1 servers", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -442,8 +416,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     }))
   );
 
-  it("should return pending requests", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should return pending requests", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.documentKeyShadowRetrievalRequestsCount())
     .then(c => assert.equal(c, 0))
     // two active requests:
@@ -478,8 +451,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     })
   );
 
-  it("should return if response is required", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should return if response is required", () => initializeKeyServerSet(setContract)
     // initially responses from all key servers are required
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
@@ -521,8 +493,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(isResponseRequired => assert.equal(isResponseRequired, true))
   );
 
-  it("should reset existing responses when servers set changes", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should reset existing responses when servers set changes", () => initializeKeyServerSet(setContract)
     // request is created and single key server responds
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
@@ -574,35 +545,30 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
 
   // Administrative API tests
 
-  it("should be able to change owner by current owner", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should be able to change owner by current owner", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setOwner(nonKeyServer))
     .then(() => serviceContract.setDocumentKeyShadowRetrievalFee(10, { from: nonKeyServer }))
     .then(() => serviceContract.setDocumentKeyShadowRetrievalFee(20))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should not be able to change owner by non-current owner", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should not be able to change owner by non-current owner", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setOwner(nonKeyServer, { from: server2.address }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should be able to change fee", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should be able to change fee", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setDocumentKeyShadowRetrievalFee(10))
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(10, 'finney') }))
   );
 
-  it("should not be able to change fee by a non-owner", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should not be able to change fee by a non-owner", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setDocumentKeyShadowRetrievalFee(10, { from: nonKeyServer }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should be able to change requests limit", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should be able to change requests limit", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setMaxDocumentKeyShadowRetrievalRequests(5))
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
@@ -616,14 +582,12 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
   );
 
-  it("should not be able to change requests limit by a non-owner", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should not be able to change requests limit by a non-owner", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.setMaxDocumentKeyShadowRetrievalRequests(5, { from: nonKeyServer }))
     .then(() => assert(false, "supposed to fail"), () => {})
   );
 
-  it("should be able to delete request", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should be able to delete request", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000002",
@@ -643,8 +607,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(c => assert.equal(c, 1))
   );
 
-  it("should not be able to delete request by a non-owner", () => Promise
-    .resolve(initializeKeyServerSet(setContract))
+  it("should not be able to delete request by a non-owner", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requesterAddress1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.deleteDocumentKeyShadowRetrievalRequest("0x0000000000000000000000000000000000000000000000000000000000000001",
