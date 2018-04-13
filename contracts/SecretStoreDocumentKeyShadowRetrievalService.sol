@@ -29,7 +29,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		bytes requesterPublic;
 		RequestResponses commonRetrievalResponses;
 		bool isCommonRetrievalCompleted;
-		uint256 threshold;
+		uint8 threshold;
 		// personal portion-related data
 		uint256 personalRetrievalErrors;
 		uint8 personalRetrievalErrorsCount;
@@ -56,7 +56,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	event DocumentKeyPersonalRetrievalRequested(bytes32 serverKeyId, bytes requesterPublic);
 	/// When document key common portion is retrieved. Ater this event s fired, wait for
 	/// exactly `threshold+1` `DocumentKeyPersonalRetrieved` events with the same `decryptedSecret` value.
-	event DocumentKeyCommonRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes commonPoint, uint256 threshold);
+	event DocumentKeyCommonRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes commonPoint, uint8 threshold);
 	/// When document key personal portion is retrieved. After enough events are fired, use `secretstore_shadowDecrypt`
 	/// to decrypt document contents.
 	event DocumentKeyPersonalRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes decryptedSecret, bytes shadow);
@@ -114,7 +114,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		bytes32 serverKeyId,
 		address requester,
 		bytes commonPoint,
-		uint256 threshold) external validPublic(commonPoint)
+		uint8 threshold) external validPublic(commonPoint)
 	{
 		// check if request still active
 		bytes32 retrievalId = keccak256(serverKeyId, requester);
@@ -206,7 +206,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 			shadow);
 
 		// check if all participants have responded
-		if (request.threshold + 1 != personalData.reportedCount) {
+		if (request.threshold != personalData.reportedCount - 1) {
 			return;
 		}
 
@@ -265,7 +265,9 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		request.personalRetrievalErrorsCount += 1;
 
 		// check if we have enough errors
-		if (request.threshold + 1 + 1 > request.personalRetrievalErrorsCount) {
+		if (request.threshold > request.personalRetrievalErrorsCount - 1 ||
+			(request.personalRetrievalErrorsCount > 1 &&
+			request.threshold > request.personalRetrievalErrorsCount - 2)) {
 			return;
 		}
 

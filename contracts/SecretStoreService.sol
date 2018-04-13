@@ -111,7 +111,7 @@ interface DocumentKeyStoreServiceKeyServerApi {
 interface DocumentKeyShadowRetrievalServiceClientApi {
 	/// When document key common portion is retrieved. Ater this event s fired, wait for
 	/// exactly `threshold+1` `DocumentKeyPersonalRetrieved` events with the same `decryptedSecret` value.
-	event DocumentKeyCommonRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes commonPoint, uint256 threshold);
+	event DocumentKeyCommonRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes commonPoint, uint8 threshold);
 	/// When document key personal portion is retrieved. After enough events are fired, use `secretstore_shadowDecrypt`
 	/// to decrypt document contents.
 	event DocumentKeyPersonalRetrieved(bytes32 indexed serverKeyId, address indexed requester, bytes decryptedSecret, bytes shadow);
@@ -134,7 +134,7 @@ interface DocumentKeyShadowRetrievalServiceKeyServerApi {
 		bytes32 serverKeyId,
 		address requester,
 		bytes commonPoint,
-		uint256 threshold) external;
+		uint8 threshold) external;
 	/// Called when 'personal' data is reported by key server.
 	function documentKeyPersonalRetrieved(
 		bytes32 serverKeyId,
