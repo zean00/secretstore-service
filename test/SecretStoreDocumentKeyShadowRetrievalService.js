@@ -214,15 +214,12 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(c => assert.equal(c, 0))
   );
 
-  it("should publish retrieved document key common if some servers respond with different common values", () => initializeKeyServerSet(setContract)
+  it("should publish retrieved document key common only once", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
+    // there are 5 servers => we'll wait for 5/2+1 servers to respond with the same value before publishing common data
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, commonPoint1, 1, { from: server1.address }))
-    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
-      requesterAddress1, commonPoint1, 2, { from: server1.address }))
-    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
-      requesterAddress1, commonPoint2, 1, { from: server1.address }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, commonPoint1, 1, { from: server2.address }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -243,7 +240,42 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
         }
       }], 'Events are emitted'
     ))
-  )
+    // now let's check that when 4th server responds with the same common data, no events are fired
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint1, 1, { from: server4.address }))
+    .then(receipt => assert.equal(receipt.logs.length, 0))
+  );
+
+  it("should publish retrieved document key common if some servers respond with different common values", () => initializeKeyServerSet(setContract)
+    .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint1, 1, { from: server1.address }))
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint1, 2, { from: server2.address }))
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint2, 1, { from: server3.address }))
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint1, 1, { from: server4.address }))
+    .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
+      requesterAddress1, commonPoint1, 1, { from: server5.address }))
+    .then(receipt => assert.web3Events(receipt, [{
+        event: 'DocumentKeyCommonRetrieved',
+        args: {
+          serverKeyId: "0x0000000000000000000000000000000000000000000000000000000000000001",
+          requester: requesterAddress1,
+          commonPoint: commonPoint1,
+          threshold: 1
+        }
+      }, {
+        event: 'DocumentKeyPersonalRetrievalRequested',
+        args: {
+          serverKeyId: "0x0000000000000000000000000000000000000000000000000000000000000001",
+          requesterPublic: requesterPublic1,
+        }
+      }], 'Events are emitted'
+    ))
+  );
 
   it("should fail document key common retrieval if no agreement on common values possible", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",

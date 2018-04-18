@@ -119,7 +119,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		// check if request still active
 		bytes32 retrievalId = keccak256(serverKeyId, requester);
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
-		if (request.requesterPublic.length == 0) {
+		if (request.isCommonRetrievalCompleted || request.requesterPublic.length == 0) {
 			return;
 		}
 
