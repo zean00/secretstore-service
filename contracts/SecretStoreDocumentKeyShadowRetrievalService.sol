@@ -255,8 +255,8 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		// waiting for N errors isn't good, because consensus set in decryption session is constructed
 		//   right after t+1 nodes have responded with AGREE => some of nodes (with bad connectivity) might be
 		//   'banned' from this session forever
-		// waiting for N/2 isn't good for the same reason
-		// => let's wait for (t+1)+1 errors from different nodes
+		// waiting for any threshold-related errors count will fail if this count is larger than N
+		// => let's wait for N/2+1 errors from different nodes
 		uint256 keyServerMask = uint256(1) << keyServerIndex;
 		if ((request.personalRetrievalErrors & keyServerMask) != 0) {
 			return;
@@ -265,9 +265,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		request.personalRetrievalErrorsCount += 1;
 
 		// check if we have enough errors
-		if (request.threshold > request.personalRetrievalErrorsCount - 1 ||
-			(request.personalRetrievalErrorsCount > 1 &&
-			request.threshold > request.personalRetrievalErrorsCount - 2)) {
+		if (request.personalRetrievalErrorsCount < keyServersCount() / 2 + 1) {
 			return;
 		}
 

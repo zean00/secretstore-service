@@ -381,7 +381,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
       requesterAddress1, commonPoint1, 1, { from: server2.address }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, commonPoint1, 1, { from: server3.address }))
-    // threshold is 1 => we are waiting for 3 (t+1+1) errors before reporting an error
+    // N is 5 => we are waiting for 3 (5/2 + 1) errors before reporting an error
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, { from: server1.address }))
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -391,7 +391,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
     .then(receipt => assert.equal(receipt.logs.length, 0))
   );
 
-  it("should report document key shadow retrieval failure if private retrieval error is confirmed by t+1+1 servers", () => initializeKeyServerSet(setContract)
+  it("should report document key shadow retrieval failure if private retrieval error is confirmed by >= N/2+1 servers", () => initializeKeyServerSet(setContract)
     .then(() => serviceContract.retrieveDocumentKeyShadow("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterPublic1, { from: requester1, value: web3.toWei(200, 'finney') }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -400,7 +400,7 @@ contract('DocumentKeyShadowRetrievalService', function(accounts) {
       requesterAddress1, commonPoint1, 1, { from: server2.address }))
     .then(() => serviceContract.documentKeyCommonRetrieved("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, commonPoint1, 1, { from: server3.address }))
-    // threshold is 1 => we are waiting for 3 (t+1+1) errors before reporting an error
+    // N is 5 => we are waiting for 3 (5/2 + 1) errors before reporting an error
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
       requesterAddress1, { from: server1.address }))
     .then(() => serviceContract.documentKeyShadowRetrievalError("0x0000000000000000000000000000000000000000000000000000000000000001",
