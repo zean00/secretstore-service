@@ -121,7 +121,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	// Only run when sender is potential participant of migration.
 	modifier isPossibleMigrationParticipant {
 		require(
-		    keccak256(abi.encodePacked(currentSet.map[msg.sender].ip)) != keccak256("") ||
+			keccak256(abi.encodePacked(currentSet.map[msg.sender].ip)) != keccak256("") ||
 			keccak256(abi.encodePacked(newSet.map[msg.sender].ip)) != keccak256(""));
 		_;
 	}
