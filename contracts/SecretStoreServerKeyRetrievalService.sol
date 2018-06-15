@@ -85,7 +85,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		uint8 keyServerIndex = requireKeyServer(msg.sender);
 
 		ResponseSupport responseSupport;
-		bytes storage finalServerKeyPublic;
+		bytes memory finalServerKeyPublic;
 		(responseSupport, finalServerKeyPublic) = insertServerKeyRetrievalResponse(
 			request,
 			keyServerIndex,
@@ -123,7 +123,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		bytes memory invalidPublic = new bytes(64);
 
 		ResponseSupport responseSupport;
-		bytes _finalServerKeyPublic;
+		bytes memory _finalServerKeyPublic;
 		(responseSupport, _finalServerKeyPublic) = insertServerKeyRetrievalResponse(
 			request,
 			keyServerIndex,
@@ -209,7 +209,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		}
 
 		// insert response itself
-		bytes32 response = keccak256(serverKeyPublic, threshold);
+		bytes32 response = keccak256(abi.encodePacked(serverKeyPublic, threshold));
 		ResponseSupport responseSupport = insertResponse(
 			request.responses,
 			keyServerIndex,

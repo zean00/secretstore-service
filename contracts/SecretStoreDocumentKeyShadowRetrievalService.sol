@@ -84,7 +84,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		// check maximum number of requests
 		require(documentKeyShadowRetrievalRequestsKeys.length < maxDocumentKeyShadowRetrievalRequests);
 
-		bytes32 retrievalId = keccak256(serverKeyId, msg.sender);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, msg.sender));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		require(request.requesterPublic.length == 0);
 		deposit();
@@ -118,7 +118,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		uint8 threshold) external validPublic(commonPoint)
 	{
 		// check if request still active
-		bytes32 retrievalId = keccak256(serverKeyId, requester);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		if (request.isCommonRetrievalCompleted || request.requesterPublic.length == 0) {
 			return;
@@ -126,7 +126,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 
 		// insert response
 		uint8 keyServerIndex = requireKeyServer(msg.sender);
-		bytes32 commonResponse = keccak256(commonPoint, threshold);
+		bytes32 commonResponse = keccak256(abi.encodePacked(commonPoint, threshold));
 		ResponseSupport commonResponseSupport = insertResponse(
 			request.commonRetrievalResponses,
 			keyServerIndex,
@@ -168,7 +168,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		validPublic(decryptedSecret)
 	{
 		// check if request still active
-		bytes32 retrievalId = keccak256(serverKeyId, requester);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		if (request.requesterPublic.length == 0) {
 			return;
@@ -186,7 +186,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		require((participants & keyServerMask) != 0);
 
 		// insert new personal data
-		bytes32 personalDataId = keccak256(participants, decryptedSecret);
+		bytes32 personalDataId = keccak256(abi.encodePacked(participants, decryptedSecret));
 		DocumentKeyShadowRetrievalData storage personalData = request.personalData[personalDataId];
 		if (personalData.participants == 0) {
 			request.personalDataKeys.push(personalDataId);
@@ -218,7 +218,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	/// Called when error occurs during document key shadow retrieval.
 	function documentKeyShadowRetrievalError(bytes32 serverKeyId, address requester) external {
 		// check if request still active
-		bytes32 retrievalId = keccak256(serverKeyId, requester);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		if (request.requesterPublic.length == 0) {
 			return;
@@ -295,7 +295,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	/// Returs true if response from given keyServer is required.
 	function isDocumentKeyShadowRetrievalResponseRequired(bytes32 serverKeyId, address requester, address keyServer) view external returns (bool) {
 		uint8 keyServerIndex = requireKeyServer(keyServer);
-		bytes32 retrievalId = keccak256(serverKeyId, requester);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		// response is always required when personal retrieval is requested
 		return request.isCommonRetrievalCompleted ||
@@ -325,7 +325,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		public
 		onlyOwner
 	{
-		bytes32 retrievalId = keccak256(serverKeyId, requester);
+		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
 
