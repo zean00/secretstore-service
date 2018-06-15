@@ -64,7 +64,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		request.threshold = threshold;
 		serverKeyGenerationRequestsKeys.push(serverKeyId);
 
-		ServerKeyGenerationRequested(serverKeyId, msg.sender, threshold);
+		emit ServerKeyGenerationRequested(serverKeyId, msg.sender, threshold);
 	}
 
 	/// Called when generation is reported by key server.
@@ -92,9 +92,9 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		// delete request and fire event
 		clearServerKeyGenerationRequest(serverKeyId, request);
 		if (responseSupport == ResponseSupport.Confirmed) { // confirmed
-			ServerKeyGenerated(serverKeyId, serverKeyPublic);
+			emit ServerKeyGenerated(serverKeyId, serverKeyPublic);
 		} else { // no consensus possible at all
-			ServerKeyGenerationError(serverKeyId);
+			emit ServerKeyGenerationError(serverKeyId);
 		}
 	}
 
@@ -112,7 +112,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		// any error in key generation is fatal, because we need all key servers to participate in generation
 		// => delete request and fire event
 		clearServerKeyGenerationRequest(serverKeyId, request);
-		ServerKeyGenerationError(serverKeyId);
+		emit ServerKeyGenerationError(serverKeyId);
 	}
 
 	/// Get count of pending server key generation requests.
@@ -156,7 +156,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
 		clearServerKeyGenerationRequest(serverKeyId, request);
 
-		ServerKeyGenerationError(serverKeyId);
+		emit ServerKeyGenerationError(serverKeyId);
 	}
 
 	// === Internal methods ===

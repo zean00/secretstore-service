@@ -106,7 +106,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		request.requesterPublic = requesterPublic;
 		documentKeyShadowRetrievalRequestsKeys.push(retrievalId);
 
-		DocumentKeyCommonRetrievalRequested(serverKeyId, msg.sender);
+		emit DocumentKeyCommonRetrievalRequested(serverKeyId, msg.sender);
 	}
 
 	/// Called when common data is reported by key server.
@@ -140,7 +140,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		// if common consensus isn't possible => personal retrieval is also impossible
 		if (commonResponseSupport == ResponseSupport.Impossible) {
 			clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
-			DocumentKeyShadowRetrievalError(serverKeyId, requester);
+			emit DocumentKeyShadowRetrievalError(serverKeyId, requester);
 			return;
 		}
 
@@ -149,12 +149,12 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		request.threshold = threshold;
 
 		// ...and publish common data (this is also a signal to 'master' key server to start decryption)
-		DocumentKeyCommonRetrieved(
+		emit DocumentKeyCommonRetrieved(
 			serverKeyId,
 			requester,
 			commonPoint,
 			threshold);
-		DocumentKeyPersonalRetrievalRequested(serverKeyId, request.requesterPublic);
+		emit DocumentKeyPersonalRetrievalRequested(serverKeyId, request.requesterPublic);
 	}
 
 	/// Called when 'personal' data is reported by key server.
@@ -199,7 +199,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		personalData.reported |= keyServerMask;
 
 		// publish personal portion
-		DocumentKeyPersonalRetrieved(
+		emit DocumentKeyPersonalRetrieved(
 			serverKeyId,
 			requester,
 			decryptedSecret,
@@ -241,7 +241,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 
 			// delete request and fire event
 			clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
-			DocumentKeyShadowRetrievalError(serverKeyId, requester);
+			emit DocumentKeyShadowRetrievalError(serverKeyId, requester);
 			return;
 		}
 
@@ -271,7 +271,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 
 		// delete request and fire event
 		clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
-		DocumentKeyShadowRetrievalError(serverKeyId, requester);
+		emit DocumentKeyShadowRetrievalError(serverKeyId, requester);
 	}
 
 	/// Get count of pending document key shadow retrieval requests.
@@ -319,7 +319,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		clearDocumentKeyShadowRetrievalRequest(retrievalId, request);
 
-		DocumentKeyShadowRetrievalError(serverKeyId, requester);
+		emit DocumentKeyShadowRetrievalError(serverKeyId, requester);
 	}
 
 	// === Internal methods ===
