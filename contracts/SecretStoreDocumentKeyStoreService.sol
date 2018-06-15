@@ -38,7 +38,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	event DocumentKeyStoreError(bytes32 indexed serverKeyId);
 
 	/// Constructor.
-	function SecretStoreDocumentKeyStoreService(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
+	constructor(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
 		documentKeyStoreFee = 100 finney;
 		maxDocumentKeyStoreRequests = 8;
 	}
@@ -147,17 +147,26 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	// === Administrative methods ===
 
 	/// Set document key store fee.
-	function setDocumentKeyStoreFee(uint256 newFee) public only_owner {
+	function setDocumentKeyStoreFee(uint256 newFee)
+		public
+		onlyOwner
+	{
 		documentKeyStoreFee = newFee;
 	}
 
 	/// Set document key store requests limit.
-	function setMaxDocumentKeyStoreRequests(uint256 newLimit) public only_owner {
+	function setMaxDocumentKeyStoreRequests(uint256 newLimit)
+		public
+		onlyOwner
+	{
 		maxDocumentKeyStoreRequests = newLimit;
 	}
 
 	/// Delete document key store request.
-	function deleteDocumentKeyStoreRequest(bytes32 serverKeyId) public only_owner {
+	function deleteDocumentKeyStoreRequest(bytes32 serverKeyId)
+		public
+		onlyOwner
+	{
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
 		clearDocumentKeyStoreRequest(serverKeyId, request);
 

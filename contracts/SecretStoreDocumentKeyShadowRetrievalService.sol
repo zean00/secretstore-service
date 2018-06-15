@@ -21,6 +21,7 @@ import "./SecretStoreServiceBase.sol";
 
 
 /// Document Key shadow retrieval service contract.
+/* solium-disable-next-line */
 contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase, DocumentKeyShadowRetrievalServiceClientApi, DocumentKeyShadowRetrievalServiceKeyServerApi {
 	/// Document key shadow retrieval request.
 	struct DocumentKeyShadowRetrievalRequest {
@@ -64,7 +65,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	event DocumentKeyShadowRetrievalError(bytes32 indexed serverKeyId, address indexed requester);
 
 	/// Constructor.
-	function SecretStoreDocumentKeyShadowRetrievalService(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
+	constructor(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
 		documentKeyShadowRetrievalFee = 200 finney;
 		maxDocumentKeyShadowRetrievalRequests = 4;
 	}
@@ -304,17 +305,26 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	// === Administrative methods ===
 
 	/// Set document key shadow retrieval fee.
-	function setDocumentKeyShadowRetrievalFee(uint256 newFee) public only_owner {
+	function setDocumentKeyShadowRetrievalFee(uint256 newFee)
+		public
+		onlyOwner
+	{
 		documentKeyShadowRetrievalFee = newFee;
 	}
 
 	/// Set document key shadow retrieval requests limit.
-	function setMaxDocumentKeyShadowRetrievalRequests(uint256 newLimit) public only_owner {
+	function setMaxDocumentKeyShadowRetrievalRequests(uint256 newLimit)
+		public
+		onlyOwner
+	{
 		maxDocumentKeyShadowRetrievalRequests = newLimit;
 	}
 
 	/// Delete document key shadow retrieval request.
-	function deleteDocumentKeyShadowRetrievalRequest(bytes32 serverKeyId, address requester) public only_owner {
+	function deleteDocumentKeyShadowRetrievalRequest(bytes32 serverKeyId, address requester)
+		public
+		onlyOwner
+	{
 		bytes32 retrievalId = keccak256(serverKeyId, requester);
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		clearDocumentKeyShadowRetrievalRequest(retrievalId, request);

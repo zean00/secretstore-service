@@ -161,47 +161,47 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	}
 
 	// Get all current key servers.
-	function getCurrentKeyServers() external constant returns (address[]) {
+	function getCurrentKeyServers() external view returns (address[]) {
 		return currentSet.list;
 	}
 
 	// Get current key server public key.
-	function getCurrentKeyServerPublic(address keyServer) isOnCurrentSet(keyServer) external constant returns (bytes) {
+	function getCurrentKeyServerPublic(address keyServer) isOnCurrentSet(keyServer) external view returns (bytes) {
 		return currentSet.map[keyServer].publicKey;
 	}
 
 	// Get current key server address.
-	function getCurrentKeyServerAddress(address keyServer) isOnCurrentSet(keyServer) external constant returns (string) {
+	function getCurrentKeyServerAddress(address keyServer) isOnCurrentSet(keyServer) external view returns (string) {
 		return currentSet.map[keyServer].ip;
 	}
 
 	// Get all migration key servers.
-	function getMigrationKeyServers() external constant returns (address[]) {
+	function getMigrationKeyServers() external view returns (address[]) {
 		return migrationSet.list;
 	}
 
 	// Get migration key server public key.
-	function getMigrationKeyServerPublic(address keyServer) isOnMigrationSet(keyServer) external constant returns (bytes) {
+	function getMigrationKeyServerPublic(address keyServer) isOnMigrationSet(keyServer) external view returns (bytes) {
 		return migrationSet.map[keyServer].publicKey;
 	}
 
 	// Get migration key server address.
-	function getMigrationKeyServerAddress(address keyServer) isOnMigrationSet(keyServer) external constant returns (string) {
+	function getMigrationKeyServerAddress(address keyServer) isOnMigrationSet(keyServer) external view returns (string) {
 		return migrationSet.map[keyServer].ip;
 	}
 
 	// Get all new key servers.
-	function getNewKeyServers() external constant returns (address[]) {
+	function getNewKeyServers() external view returns (address[]) {
 		return newSet.list;
 	}
 
 	// Get new key server public key.
-	function getNewKeyServerPublic(address keyServer) isOnNewSet(keyServer) external constant returns (bytes) {
+	function getNewKeyServerPublic(address keyServer) isOnNewSet(keyServer) external view returns (bytes) {
 		return newSet.map[keyServer].publicKey;
 	}
 
 	// Get new key server address.
-	function getNewKeyServerAddress(address keyServer) isOnNewSet(keyServer) external constant returns (string) {
+	function getNewKeyServerAddress(address keyServer) isOnNewSet(keyServer) external view returns (string) {
 		return newSet.map[keyServer].ip;
 	}
 
@@ -253,7 +253,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	}
 
 	// Get migration master.
-	function getMigrationMaster() external constant returns (address) {
+	function getMigrationMaster() external view returns (address) {
 		return migrationMaster;
 	}
 
@@ -270,7 +270,12 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	}
 
 	// Add new key server to set.
-	function addKeyServer(bytes keyServerPublic, string keyServerIp) public onlyOwner isValidPublic(keyServerPublic) isNotOnNewSet(computeAddress(keyServerPublic)) {
+	function addKeyServer(bytes keyServerPublic, string keyServerIp)
+		public
+		onlyOwner
+		isValidPublic(keyServerPublic)
+		isNotOnNewSet(computeAddress(keyServerPublic))
+	{
 		// append to the new set
 		address keyServer = appendToSet(newSet, keyServerPublic, keyServerIp);
 		// also append to current set

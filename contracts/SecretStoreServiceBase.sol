@@ -58,7 +58,7 @@ contract SecretStoreServiceBase is Owned {
 	}
 
 	/// Constructor.
-	function SecretStoreServiceBase(address keyServerSetAddressInit) internal {
+	constructor(address keyServerSetAddressInit) internal {
 		keyServerSetAddress = keyServerSetAddressInit;
 	}
 
