@@ -1,0 +1,91 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "commonPoint",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "name": "threshold",
+        "type": "uint8"
+      }
+    ],
+    "name": "DocumentKeyCommonRetrieved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "decryptedSecret",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "name": "shadow",
+        "type": "bytes"
+      }
+    ],
+    "name": "DocumentKeyPersonalRetrieved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "name": "requester",
+        "type": "address"
+      }
+    ],
+    "name": "DocumentKeyShadowRetrievalError",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "requesterPublic",
+        "type": "bytes"
+      }
+    ],
+    "name": "retrieveDocumentKeyShadow",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

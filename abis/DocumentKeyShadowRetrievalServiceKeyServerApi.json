@@ -1,0 +1,178 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "requester",
+        "type": "address"
+      }
+    ],
+    "name": "DocumentKeyCommonRetrievalRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "requesterPublic",
+        "type": "bytes"
+      }
+    ],
+    "name": "DocumentKeyPersonalRetrievalRequested",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "name": "commonPoint",
+        "type": "bytes"
+      },
+      {
+        "name": "threshold",
+        "type": "uint8"
+      }
+    ],
+    "name": "documentKeyCommonRetrieved",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "requester",
+        "type": "address"
+      },
+      {
+        "name": "participants",
+        "type": "uint256"
+      },
+      {
+        "name": "decryptedSecret",
+        "type": "bytes"
+      },
+      {
+        "name": "shadow",
+        "type": "bytes"
+      }
+    ],
+    "name": "documentKeyPersonalRetrieved",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "requester",
+        "type": "address"
+      }
+    ],
+    "name": "documentKeyShadowRetrievalError",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "documentKeyShadowRetrievalRequestsCount",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDocumentKeyShadowRetrievalRequest",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "name": "",
+        "type": "bytes"
+      },
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "keyServer",
+        "type": "address"
+      },
+      {
+        "name": "requester",
+        "type": "address"
+      }
+    ],
+    "name": "isDocumentKeyShadowRetrievalResponseRequired",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
