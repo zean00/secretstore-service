@@ -21,6 +21,7 @@ import "./SecretStoreServiceBase.sol";
 
 
 /// Server Key retrieval service contract.
+/* solium-disable-next-line */
 contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerKeyRetrievalServiceClientApi, ServerKeyRetrievalServiceKeyServerApi {
 	/// Server key retrieval request.
 	struct ServerKeyRetrievalRequest {
@@ -38,7 +39,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	event ServerKeyRetrievalError(bytes32 indexed serverKeyId);
 
 	/// Constructor.
-	function SecretStoreServerKeyRetrievalService(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
+	constructor(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
 		serverKeyRetrievalFee = 100 finney;
 		maxServerKeyRetrievalRequests = 8;
 	}
@@ -68,7 +69,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		request.isActive = true;
 		serverKeyRetrievalRequestsKeys.push(serverKeyId);
 
-		ServerKeyRetrievalRequested(serverKeyId);
+		emit ServerKeyRetrievalRequested(serverKeyId);
 	}
 
 	/// Called when retrieval is reported by key server.
@@ -82,7 +83,10 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		// insert response (we're waiting for responses from all authorities here)
 		// it checks that tx.origin is actually the key server
 		uint8 keyServerIndex = requireKeyServer(msg.sender);
-		var (responseSupport, finalServerKeyPublic) = insertServerKeyRetrievalResponse(
+
+		ResponseSupport responseSupport;
+		bytes memory finalServerKeyPublic;
+		(responseSupport, finalServerKeyPublic) = insertServerKeyRetrievalResponse(
 			request,
 			keyServerIndex,
 			serverKeyPublic,
@@ -96,9 +100,9 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		// delete request and fire event
 		clearServerKeyRetrievalRequest(serverKeyId, request);
 		if (responseSupport == ResponseSupport.Confirmed) { // confirmed
-			ServerKeyRetrieved(serverKeyId, finalServerKeyPublic);
+			emit ServerKeyRetrieved(serverKeyId, finalServerKeyPublic);
 		} else { // no consensus possible at all
-			ServerKeyRetrievalError(serverKeyId);
+			emit ServerKeyRetrievalError(serverKeyId);
 		}
 	}
 
@@ -117,7 +121,10 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		// => we could make an error fatal, but let's tolerate such issues
 		// => insert invalid response and check if there are enough confirmations
 		bytes memory invalidPublic = new bytes(64);
-		var (responseSupport, ) = insertServerKeyRetrievalResponse(
+
+		ResponseSupport responseSupport;
+		bytes memory _finalServerKeyPublic;
+		(responseSupport, _finalServerKeyPublic) = insertServerKeyRetrievalResponse(
 			request,
 			keyServerIndex,
 			invalidPublic,
@@ -128,7 +135,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 
 		// delete request and fire event
 		clearServerKeyRetrievalRequest(serverKeyId, request);
-		ServerKeyRetrievalError(serverKeyId);
+		emit ServerKeyRetrievalError(serverKeyId);
 	}
 
 	/// Get count of pending server key retrieval requests.
@@ -155,21 +162,30 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	// === Administrative methods ===
 
 	/// Set server key retrieval fee.
-	function setServerKeyRetrievalFee(uint256 newFee) public only_owner {
+	function setServerKeyRetrievalFee(uint256 newFee)
+		public
+		onlyOwner
+	{
 		serverKeyRetrievalFee = newFee;
 	}
 
 	/// Set server key retrieval requests limit.
-	function setMaxServerKeyRetrievalRequests(uint256 newLimit) public only_owner {
+	function setMaxServerKeyRetrievalRequests(uint256 newLimit)
+		public
+		onlyOwner
+	{
 		maxServerKeyRetrievalRequests = newLimit;
 	}
 
 	/// Delete server key retrieval request.
-	function deleteServerKeyRetrievalRequest(bytes32 serverKeyId) public only_owner {
+	function deleteServerKeyRetrievalRequest(bytes32 serverKeyId)
+		public
+		onlyOwner
+	{
 		ServerKeyRetrievalRequest storage request = serverKeyRetrievalRequests[serverKeyId];
 		clearServerKeyRetrievalRequest(serverKeyId, request);
 
-		ServerKeyRetrievalError(serverKeyId);
+		emit ServerKeyRetrievalError(serverKeyId);
 	}
 
 	// === Internal methods ===
@@ -193,7 +209,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 		}
 
 		// insert response itself
-		bytes32 response = keccak256(serverKeyPublic, threshold);
+		bytes32 response = keccak256(abi.encodePacked(serverKeyPublic, threshold));
 		ResponseSupport responseSupport = insertResponse(
 			request.responses,
 			keyServerIndex,

@@ -1,0 +1,49 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "serverKeyPublic",
+        "type": "bytes"
+      }
+    ],
+    "name": "ServerKeyGenerated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "serverKeyId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ServerKeyGenerationError",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "serverKeyId",
+        "type": "bytes32"
+      },
+      {
+        "name": "threshold",
+        "type": "uint8"
+      }
+    ],
+    "name": "generateServerKey",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]

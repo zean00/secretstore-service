@@ -38,7 +38,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	event DocumentKeyStoreError(bytes32 indexed serverKeyId);
 
 	/// Constructor.
-	function SecretStoreDocumentKeyStoreService(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
+	constructor(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
 		documentKeyStoreFee = 100 finney;
 		maxDocumentKeyStoreRequests = 8;
 	}
@@ -67,7 +67,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 		request.encryptedPoint = encryptedPoint;
 		documentKeyStoreRequestsKeys.push(serverKeyId);
 
-		DocumentKeyStoreRequested(
+		emit DocumentKeyStoreRequested(
 			serverKeyId,
 			msg.sender,
 			commonPoint,
@@ -99,7 +99,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 		// delete request and fire event
 		// there's always consensus, because key servers are only reporting the fact that they've stored the key
 		clearDocumentKeyStoreRequest(serverKeyId, request);
-		DocumentKeyStored(serverKeyId);
+		emit DocumentKeyStored(serverKeyId);
 	}
 
 	/// Called when error occurs during document key store.
@@ -116,7 +116,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 		// any error in key store is fatal, because we need all key servers to participate in store
 		// => delete request and fire event
 		clearDocumentKeyStoreRequest(serverKeyId, request);
-		DocumentKeyStoreError(serverKeyId);
+		emit DocumentKeyStoreError(serverKeyId);
 	}
 
 	/// Get count of pending document key store requests.
@@ -147,21 +147,30 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	// === Administrative methods ===
 
 	/// Set document key store fee.
-	function setDocumentKeyStoreFee(uint256 newFee) public only_owner {
+	function setDocumentKeyStoreFee(uint256 newFee)
+		public
+		onlyOwner
+	{
 		documentKeyStoreFee = newFee;
 	}
 
 	/// Set document key store requests limit.
-	function setMaxDocumentKeyStoreRequests(uint256 newLimit) public only_owner {
+	function setMaxDocumentKeyStoreRequests(uint256 newLimit)
+		public
+		onlyOwner
+	{
 		maxDocumentKeyStoreRequests = newLimit;
 	}
 
 	/// Delete document key store request.
-	function deleteDocumentKeyStoreRequest(bytes32 serverKeyId) public only_owner {
+	function deleteDocumentKeyStoreRequest(bytes32 serverKeyId)
+		public
+		onlyOwner
+	{
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
 		clearDocumentKeyStoreRequest(serverKeyId, request);
 
-		DocumentKeyStoreError(serverKeyId);
+		emit DocumentKeyStoreError(serverKeyId);
 	}
 
 	// === Internal methods ===

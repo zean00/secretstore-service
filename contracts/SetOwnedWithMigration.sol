@@ -49,7 +49,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 
 	// Is initialized.
 	bool isInitialized;
-	// Block at which current 
+	// Block at which current
 	uint256 currentSetChangeBlock;
 	// Current key servers set.
 	Set currentSet;
@@ -72,25 +72,25 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 
 	// Only run if server is currently on current set.
 	modifier isOnCurrentSet(address keyServer) {
-		require(keccak256(currentSet.map[keyServer].ip) != keccak256(""));
+		require(keccak256(abi.encodePacked(currentSet.map[keyServer].ip)) != keccak256(""));
 		_;
 	}
 
 	// Only run if server is currently on migration set.
 	modifier isOnMigrationSet(address keyServer) {
-		require(keccak256(migrationSet.map[keyServer].ip) != keccak256(""));
+		require(keccak256(abi.encodePacked(migrationSet.map[keyServer].ip)) != keccak256(""));
 		_;
 	}
 
 	// Only run if server is currently on new set.
 	modifier isOnNewSet(address keyServer) {
-		require(keccak256(newSet.map[keyServer].ip) != keccak256(""));
+		require(keccak256(abi.encodePacked(newSet.map[keyServer].ip)) != keccak256(""));
 		_;
 	}
 
 	// Only run if server is currently on new set.
 	modifier isNotOnNewSet(address keyServer) {
-		require(keccak256(newSet.map[keyServer].ip) == keccak256(""));
+		require(keccak256(abi.encodePacked(newSet.map[keyServer].ip)) == keccak256(""));
 		_;
 	}
 
@@ -121,16 +121,16 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	// Only run when sender is potential participant of migration.
 	modifier isPossibleMigrationParticipant {
 		require(
-			keccak256(currentSet.map[msg.sender].ip) != keccak256("") ||
-			keccak256(newSet.map[msg.sender].ip) != keccak256(""));
+			keccak256(abi.encodePacked(currentSet.map[msg.sender].ip)) != keccak256("") ||
+			keccak256(abi.encodePacked(newSet.map[msg.sender].ip)) != keccak256(""));
 		_;
 	}
 
 	// Only run when sender is participant of migration.
 	modifier isMigrationParticipant(address keyServer) {
 		require(
-			keccak256(currentSet.map[keyServer].ip) != keccak256("") ||
-			keccak256(migrationSet.map[keyServer].ip) != keccak256(""));
+			keccak256(abi.encodePacked(currentSet.map[keyServer].ip)) != keccak256("") ||
+			keccak256(abi.encodePacked(migrationSet.map[keyServer].ip)) != keccak256(""));
 		_;
 	}
 
@@ -145,7 +145,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	/// Get index of given key server in current set.
 	function getCurrentKeyServerIndex(address keyServer) external view returns (uint8) {
 		KeyServer storage entry = currentSet.map[keyServer];
-		require(keccak256(entry.ip) != keccak256(""));
+		require(keccak256(abi.encodePacked(entry.ip)) != keccak256(""));
 		return entry.index;
 	}
 
@@ -161,47 +161,47 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	}
 
 	// Get all current key servers.
-	function getCurrentKeyServers() external constant returns (address[]) {
+	function getCurrentKeyServers() external view returns (address[]) {
 		return currentSet.list;
 	}
 
 	// Get current key server public key.
-	function getCurrentKeyServerPublic(address keyServer) isOnCurrentSet(keyServer) external constant returns (bytes) {
+	function getCurrentKeyServerPublic(address keyServer) isOnCurrentSet(keyServer) external view returns (bytes) {
 		return currentSet.map[keyServer].publicKey;
 	}
 
 	// Get current key server address.
-	function getCurrentKeyServerAddress(address keyServer) isOnCurrentSet(keyServer) external constant returns (string) {
+	function getCurrentKeyServerAddress(address keyServer) isOnCurrentSet(keyServer) external view returns (string) {
 		return currentSet.map[keyServer].ip;
 	}
 
 	// Get all migration key servers.
-	function getMigrationKeyServers() external constant returns (address[]) {
+	function getMigrationKeyServers() external view returns (address[]) {
 		return migrationSet.list;
 	}
 
 	// Get migration key server public key.
-	function getMigrationKeyServerPublic(address keyServer) isOnMigrationSet(keyServer) external constant returns (bytes) {
+	function getMigrationKeyServerPublic(address keyServer) isOnMigrationSet(keyServer) external view returns (bytes) {
 		return migrationSet.map[keyServer].publicKey;
 	}
 
 	// Get migration key server address.
-	function getMigrationKeyServerAddress(address keyServer) isOnMigrationSet(keyServer) external constant returns (string) {
+	function getMigrationKeyServerAddress(address keyServer) isOnMigrationSet(keyServer) external view returns (string) {
 		return migrationSet.map[keyServer].ip;
 	}
 
 	// Get all new key servers.
-	function getNewKeyServers() external constant returns (address[]) {
+	function getNewKeyServers() external view returns (address[]) {
 		return newSet.list;
 	}
 
 	// Get new key server public key.
-	function getNewKeyServerPublic(address keyServer) isOnNewSet(keyServer) external constant returns (bytes) {
+	function getNewKeyServerPublic(address keyServer) isOnNewSet(keyServer) external view returns (bytes) {
 		return newSet.map[keyServer].publicKey;
 	}
 
 	// Get new key server address.
-	function getNewKeyServerAddress(address keyServer) isOnNewSet(keyServer) external constant returns (string) {
+	function getNewKeyServerAddress(address keyServer) isOnNewSet(keyServer) external view returns (string) {
 		return newSet.map[keyServer].ip;
 	}
 
@@ -218,7 +218,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 		migrationMaster = msg.sender;
 		migrationId = id;
 		copySet(migrationSet, newSet);
-		MigrationStarted();
+		emit MigrationStarted();
 	}
 
 	// Confirm migration.
@@ -246,14 +246,14 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 		clearSet(migrationSet);
 
 		// ...and fire completion event
-		MigrationCompleted();
+		emit MigrationCompleted();
 
 		// ...and update current server set change block
 		currentSetChangeBlock = block.number;
 	}
 
 	// Get migration master.
-	function getMigrationMaster() external constant returns (address) {
+	function getMigrationMaster() external view returns (address) {
 		return migrationMaster;
 	}
 
@@ -264,13 +264,18 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 
 	// Complete initialization. Before this function is called, all calls to addKeyServer/removeKeyServer
 	// affect both newSet and currentSet.
-	function completeInitialization() public only_owner {
+	function completeInitialization() public onlyOwner {
 		require(!isInitialized);
 		isInitialized = true;
 	}
 
 	// Add new key server to set.
-	function addKeyServer(bytes keyServerPublic, string keyServerIp) public only_owner isValidPublic(keyServerPublic) isNotOnNewSet(computeAddress(keyServerPublic)) {
+	function addKeyServer(bytes keyServerPublic, string keyServerIp)
+		public
+		onlyOwner
+		isValidPublic(keyServerPublic)
+		isNotOnNewSet(computeAddress(keyServerPublic))
+	{
 		// append to the new set
 		address keyServer = appendToSet(newSet, keyServerPublic, keyServerIp);
 		// also append to current set
@@ -278,11 +283,11 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 			appendToSet(currentSet, keyServerPublic, keyServerIp);
 		}
 		// fire event
-		KeyServerAdded(keyServer);
+		emit KeyServerAdded(keyServer);
 	}
 
 	// Remove key server from set.
-	function removeKeyServer(address keyServer) public only_owner isOnNewSet(keyServer) {
+	function removeKeyServer(address keyServer) public onlyOwner isOnNewSet(keyServer) {
 		// remove element from the new set
 		removeFromSet(newSet, keyServer);
 		// also remove from the current set
@@ -290,7 +295,7 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 			removeFromSet(currentSet, keyServer);
 		}
 		// fire event
-		KeyServerRemoved(keyServer);
+		emit KeyServerRemoved(keyServer);
 	}
 
 	// Compute address from public key.
@@ -328,12 +333,12 @@ contract OwnedKeyServerSetWithMigration is Owned, KeyServerSetWithMigration {
 	// Are two sets equal?
 	function areEqualSets(Set storage set1, Set storage set2) private view returns (bool) {
 		for (uint i = 0; i < set1.list.length; ++i) {
-			if (keccak256(set2.map[set1.list[i]].ip) == keccak256("")) {
+			if (keccak256(abi.encodePacked(set2.map[set1.list[i]].ip)) == keccak256("")) {
 				return false;
 			}
 		}
 		for (uint j = 0; j < set2.list.length; ++j) {
-			if (keccak256(set1.map[set2.list[j]].ip) == keccak256("")) {
+			if (keccak256(abi.encodePacked(set1.map[set2.list[j]].ip)) == keccak256("")) {
 				return false;
 			}
 		}

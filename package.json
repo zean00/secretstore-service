@@ -13,13 +13,13 @@
     "url": "https://github.com/parity-contracts/secretstore-service/issues"
   },
   "scripts": {
-    "ci": "npx concurrently \"npm run solium\" \"npm run truffle-with-rpc\" \"npm run solidity-coverage\"",
-    "ganache": "npx ganache-cli -p 8547",
-    "solidity-coverage": "npx solidity-coverage",
-    "solium": "npx solium --dir contracts/",
-    "test": "npm run solium && npm run truffle-with-rpc",
-    "truffle": "npx truffle test",
-    "truffle-with-rpc": "npx concurrently --success first --kill-others \"npm run ganache\" \"npm run truffle\""
+    "compile": "npx truffle compile",
+    "migrate": "npx truffle migrate",
+    "test": "npx truffle test --network test",
+    "coverage": "npx solidity-coverage",
+    "lint": "npx solium -d contracts/",
+    "ganache": "npx ganache-cli --port 7545",
+    "parity": "parity --chain dev --jsonrpc-port 7545 --jsonrpc-apis all"
   },
   "devDependencies": {
     "babel-polyfill": "^6.26.0",
@@ -29,14 +29,12 @@
     "babel-register": "^6.26.0",
     "bluebird": "^3.5.1",
     "chai": "^4.1.2",
-    "concurrently": "^3.5.1",
-    "coveralls": "^3.0.0",
     "ethereumjs-util": "^5.1.5",
+    "coveralls": "^3.0.1",
     "ganache-cli": "^6.1.0",
-    "mocha-steps": "^1.1.0",
-    "solidity-coverage": "^0.4.14",
+    "solidity-coverage": "^0.5.0",
     "solium": "^1.1.6",
-    "truffle": "^4.1.3",
+    "truffle": "^4.1.5",
     "truffle-test-utils": "0.0.2"
   }
 }

@@ -21,6 +21,7 @@ import "./SecretStoreServiceBase.sol";
 
 
 /// Server Key generation service contract.
+/* solium-disable-next-line */
 contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, ServerKeyGenerationServiceClientApi, ServerKeyGenerationServiceKeyServerApi {
 	/// Server key generation request.
 	struct ServerKeyGenerationRequest {
@@ -37,7 +38,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	event ServerKeyGenerationError(bytes32 indexed serverKeyId);
 
 	/// Constructor.
-	function SecretStoreServerKeyGenerationService(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
+	constructor(address keyServerSetAddressInit) SecretStoreServiceBase(keyServerSetAddressInit) public {
 		serverKeyGenerationFee = 200 finney;
 		maxServerKeyGenerationRequests = 4;
 	}
@@ -64,7 +65,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		request.threshold = threshold;
 		serverKeyGenerationRequestsKeys.push(serverKeyId);
 
-		ServerKeyGenerationRequested(serverKeyId, msg.sender, threshold);
+		emit ServerKeyGenerationRequested(serverKeyId, msg.sender, threshold);
 	}
 
 	/// Called when generation is reported by key server.
@@ -92,9 +93,9 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		// delete request and fire event
 		clearServerKeyGenerationRequest(serverKeyId, request);
 		if (responseSupport == ResponseSupport.Confirmed) { // confirmed
-			ServerKeyGenerated(serverKeyId, serverKeyPublic);
+			emit ServerKeyGenerated(serverKeyId, serverKeyPublic);
 		} else { // no consensus possible at all
-			ServerKeyGenerationError(serverKeyId);
+			emit ServerKeyGenerationError(serverKeyId);
 		}
 	}
 
@@ -112,7 +113,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 		// any error in key generation is fatal, because we need all key servers to participate in generation
 		// => delete request and fire event
 		clearServerKeyGenerationRequest(serverKeyId, request);
-		ServerKeyGenerationError(serverKeyId);
+		emit ServerKeyGenerationError(serverKeyId);
 	}
 
 	/// Get count of pending server key generation requests.
@@ -142,21 +143,30 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	// === Administrative methods ===
 
 	/// Set server key generation fee.
-	function setServerKeyGenerationFee(uint256 newFee) public only_owner {
+	function setServerKeyGenerationFee(uint256 newFee)
+		public
+		onlyOwner
+	{
 		serverKeyGenerationFee = newFee;
 	}
 
 	/// Set server key generation requests limit.
-	function setMaxServerKeyGenerationRequests(uint256 newLimit) public only_owner {
+	function setMaxServerKeyGenerationRequests(uint256 newLimit)
+		public
+		onlyOwner
+	{
 		maxServerKeyGenerationRequests = newLimit;
 	}
 
 	/// Delete server key generation request.
-	function deleteServerKeyGenerationRequest(bytes32 serverKeyId) public only_owner {
+	function deleteServerKeyGenerationRequest(bytes32 serverKeyId)
+		public
+		onlyOwner
+	{
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
 		clearServerKeyGenerationRequest(serverKeyId, request);
 
-		ServerKeyGenerationError(serverKeyId);
+		emit ServerKeyGenerationError(serverKeyId);
 	}
 
 	// === Internal methods ===
