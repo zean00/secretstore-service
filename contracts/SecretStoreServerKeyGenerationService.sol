@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./SecretStoreService.sol";
 import "./SecretStoreServiceBase.sol";
@@ -46,19 +46,19 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	// === Interface methods ===
 
 	/// We do not support direct payments.
-	function() payable public { revert(); }
+	function() external payable { revert("Direct payment not supported"); }
 
 	/// Request new server key generation. Generated key will be published via ServerKeyGenerated event when available.
 	function generateServerKey(bytes32 serverKeyId, uint8 threshold) external payable
 		whenFeePaid(serverKeyGenerationFee)
 	{
 		// we can't process requests with invalid threshold
-		require(threshold + 1 <= keyServersCount());
+		require(threshold + 1 <= keyServersCount(), "Should less than server count");
 		// check maximum number of requests
-		require(serverKeyGenerationRequestsKeys.length < maxServerKeyGenerationRequests);
+		require(serverKeyGenerationRequestsKeys.length < maxServerKeyGenerationRequests, "Should less than max");
 
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
-		require(request.author == address(0));
+		require(request.author == address(0), "Should no author");
 		deposit();
 
 		request.author = msg.sender;
@@ -69,7 +69,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	}
 
 	/// Called when generation is reported by key server.
-	function serverKeyGenerated(bytes32 serverKeyId, bytes serverKeyPublic) external validPublic(serverKeyPublic) {
+	function serverKeyGenerated(bytes32 serverKeyId, bytes calldata serverKeyPublic) external validPublic(serverKeyPublic) {
 		// check if request still active
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
 		if (request.author == address(0)) {
@@ -117,13 +117,13 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	}
 
 	/// Get count of pending server key generation requests.
-	function serverKeyGenerationRequestsCount() view external returns (uint256) {
+	function serverKeyGenerationRequestsCount() external view returns (uint256) {
 		return serverKeyGenerationRequestsKeys.length;
 	}
 
 	/// Get server key generation request with given index.
 	/// Returns: (serverKeyId, author, threshold)
-	function getServerKeyGenerationRequest(uint256 index) view external returns (bytes32, address, uint256) {
+	function getServerKeyGenerationRequest(uint256 index) external view returns (bytes32, address, uint256) {
 		bytes32 serverKeyId = serverKeyGenerationRequestsKeys[index];
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
 		return (
@@ -134,7 +134,7 @@ contract SecretStoreServerKeyGenerationService is SecretStoreServiceBase, Server
 	}
 
 	/// Returs true if response from given keyServer is required.
-	function isServerKeyGenerationResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool) {
+	function isServerKeyGenerationResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool) {
 		uint8 keyServerIndex = requireKeyServer(keyServer);
 		ServerKeyGenerationRequest storage request = serverKeyGenerationRequests[serverKeyId];
 		return isResponseRequired(request.responses, keyServerIndex);

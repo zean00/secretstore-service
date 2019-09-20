@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./SecretStoreService.sol";
 import "./SecretStoreServiceBase.sol";
@@ -46,8 +46,8 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	}
 
 	//// Only pass when caller is the owner of given public key.
-	modifier onlyPublicOwner(bytes publicKey) {
-		require(address(uint(keccak256(publicKey)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) == msg.sender);
+	modifier onlyPublicOwner(bytes memory publicKey) {
+		require(address(uint(keccak256(publicKey)) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF) == msg.sender, "Only public owner");
 		_;
 	}
 
@@ -73,20 +73,20 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	// === Interface methods ===
 
 	/// We do not support direct payments.
-	function() payable public { revert(); }
+	function() external payable { revert("Direct payment not supported"); }
 
 	/// Request document key retrieval.
-	function retrieveDocumentKeyShadow(bytes32 serverKeyId, bytes requesterPublic) external payable
+	function retrieveDocumentKeyShadow(bytes32 serverKeyId, bytes calldata requesterPublic) external payable
 		whenFeePaid(documentKeyShadowRetrievalFee)
 		validPublic(requesterPublic)
 		onlyPublicOwner(requesterPublic)
 	{
 		// check maximum number of requests
-		require(documentKeyShadowRetrievalRequestsKeys.length < maxDocumentKeyShadowRetrievalRequests);
+		require(documentKeyShadowRetrievalRequestsKeys.length < maxDocumentKeyShadowRetrievalRequests, "Should less than max");
 
 		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, msg.sender));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
-		require(request.requesterPublic.length == 0);
+		require(request.requesterPublic.length == 0, "Should empty");
 		deposit();
 
 		// we do not know exact threshold value here && we can not blindly trust the first response
@@ -114,7 +114,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	function documentKeyCommonRetrieved(
 		bytes32 serverKeyId,
 		address requester,
-		bytes commonPoint,
+		bytes calldata commonPoint,
 		uint8 threshold) external validPublic(commonPoint)
 	{
 		// check if request still active
@@ -163,8 +163,8 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		bytes32 serverKeyId,
 		address requester,
 		uint256 participants,
-		bytes decryptedSecret,
-		bytes shadow) external
+		bytes calldata decryptedSecret,
+		bytes calldata shadow) external
 		validPublic(decryptedSecret)
 	{
 		// check if request still active
@@ -175,7 +175,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		}
 
 		// we do not accept personal data until common is retrieved
-		require(request.isCommonRetrievalCompleted);
+		require(request.isCommonRetrievalCompleted, "Should not completed yet");
 
 		// there must be exactly threshold + 1 participated key servers
 		// TODO: require(request.threshold + 1 == participants.length);
@@ -183,7 +183,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 		// key server must have an entry in participants
 		uint8 keyServerIndex = requireKeyServer(msg.sender);
 		uint256 keyServerMask = (uint256(1) << keyServerIndex);
-		require((participants & keyServerMask) != 0);
+		require((participants & keyServerMask) != 0, "Both should not null");
 
 		// insert new personal data
 		bytes32 personalDataId = keccak256(abi.encodePacked(participants, decryptedSecret));
@@ -192,7 +192,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 			request.personalDataKeys.push(personalDataId);
 			personalData.participants = participants;
 		} else {
-			require((personalData.reported & keyServerMask) == 0);
+			require((personalData.reported & keyServerMask) == 0, "Should not reported");
 		}
 
 		// remember result
@@ -276,13 +276,13 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	}
 
 	/// Get count of pending document key shadow retrieval requests.
-	function documentKeyShadowRetrievalRequestsCount() view external returns (uint256) {
+	function documentKeyShadowRetrievalRequestsCount() external view returns (uint256) {
 		return documentKeyShadowRetrievalRequestsKeys.length;
 	}
 
 	/// Get document key shadow retrieval request with given index.
 	/// Returns: (serverKeyId, requesterPublic, isCommonRetrievalCompleted)
-	function getDocumentKeyShadowRetrievalRequest(uint256 index) view external returns (bytes32, bytes, bool) {
+	function getDocumentKeyShadowRetrievalRequest(uint256 index) external view returns (bytes32, bytes memory, bool) {
 		bytes32 retrievalId = documentKeyShadowRetrievalRequestsKeys[index];
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];
 		return (
@@ -293,7 +293,7 @@ contract SecretStoreDocumentKeyShadowRetrievalService is SecretStoreServiceBase,
 	}
 
 	/// Returs true if response from given keyServer is required.
-	function isDocumentKeyShadowRetrievalResponseRequired(bytes32 serverKeyId, address requester, address keyServer) view external returns (bool) {
+	function isDocumentKeyShadowRetrievalResponseRequired(bytes32 serverKeyId, address requester, address keyServer) external view returns (bool) {
 		uint8 keyServerIndex = requireKeyServer(keyServer);
 		bytes32 retrievalId = keccak256(abi.encodePacked(serverKeyId, requester));
 		DocumentKeyShadowRetrievalRequest storage request = documentKeyShadowRetrievalRequests[retrievalId];

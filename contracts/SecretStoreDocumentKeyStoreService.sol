@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./SecretStoreService.sol";
 import "./SecretStoreServiceBase.sol";
@@ -46,20 +46,20 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	// === Interface methods ===
 
 	/// We do not support direct payments.
-	function() payable public { revert(); }
+	function() external payable { revert("Direct payment not supported"); }
 
 	/// Request document key store. Use `secretstore_generateDocumentKey` RPC to generate both
 	/// `commonPoint` and `encryptedPoint`.
-	function storeDocumentKey(bytes32 serverKeyId, bytes commonPoint, bytes encryptedPoint) external payable
+	function storeDocumentKey(bytes32 serverKeyId, bytes calldata commonPoint, bytes calldata encryptedPoint) external payable
 		whenFeePaid(documentKeyStoreFee)
 		validPublic(commonPoint)
 		validPublic(encryptedPoint)
 	{
 		// check maximum number of requests
-		require(documentKeyStoreRequestsKeys.length < maxDocumentKeyStoreRequests);
+		require(documentKeyStoreRequestsKeys.length < maxDocumentKeyStoreRequests, "Should less than max");
 
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
-		require(request.author == address(0));
+		require(request.author == address(0), "Should empty author");
 		deposit();
 
 		request.author = msg.sender;
@@ -120,13 +120,13 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	}
 
 	/// Get count of pending document key store requests.
-	function documentKeyStoreRequestsCount() view external returns (uint256) {
+	function documentKeyStoreRequestsCount() external view returns (uint256) {
 		return documentKeyStoreRequestsKeys.length;
 	}
 
 	/// Get document key store request with given index.
 	/// Returns: (serverKeyId, author, commonPoint, encryptedPoint)
-	function getDocumentKeyStoreRequest(uint256 index) view external returns (bytes32, address, bytes, bytes) {
+	function getDocumentKeyStoreRequest(uint256 index) external view returns (bytes32, address, bytes memory, bytes memory) {
 		bytes32 serverKeyId = documentKeyStoreRequestsKeys[index];
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
 		return (
@@ -138,7 +138,7 @@ contract SecretStoreDocumentKeyStoreService is SecretStoreServiceBase, DocumentK
 	}
 
 	/// Returs true if response from given keyServer is required.
-	function isDocumentKeyStoreResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool) {
+	function isDocumentKeyStoreResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool) {
 		uint8 keyServerIndex = requireKeyServer(keyServer);
 		DocumentKeyStoreRequest storage request = documentKeyStoreRequests[serverKeyId];
 		return isResponseRequired(request.responses, keyServerIndex);

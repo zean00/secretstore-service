@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 /// Server Key generation service contract API (client view).
 interface ServerKeyGenerationServiceClientApi {
@@ -33,17 +33,17 @@ interface ServerKeyGenerationServiceKeyServerApi {
 	event ServerKeyGenerationRequested(bytes32 serverKeyId, address author, uint8 threshold);
 
 	/// Called when generation is reported by key server.
-	function serverKeyGenerated(bytes32 serverKeyId, bytes serverKeyPublic) external;
+	function serverKeyGenerated(bytes32 serverKeyId, bytes calldata serverKeyPublic) external;
 	/// Called when error occurs during server key generation.
 	function serverKeyGenerationError(bytes32 serverKeyId) external;
 
 	/// Get count of pending server key generation requests.
-	function serverKeyGenerationRequestsCount() view external returns (uint256);
+	function serverKeyGenerationRequestsCount() external view returns (uint256);
 	/// Get server key generation request with given index.
 	/// Returns: (serverKeyId, author, threshold)
-	function getServerKeyGenerationRequest(uint256 index) view external returns (bytes32, address, uint256);
+	function getServerKeyGenerationRequest(uint256 index) external view returns (bytes32, address, uint256);
 	/// Returs true if response from given keyServer is required.
-	function isServerKeyGenerationResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool);
+	function isServerKeyGenerationResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool);
 }
 
 /// Server Key retrieval service contract API (client view).
@@ -63,17 +63,17 @@ interface ServerKeyRetrievalServiceKeyServerApi {
 	event ServerKeyRetrievalRequested(bytes32 serverKeyId);
 
 	/// Called when retrieval is reported by key server.
-	function serverKeyRetrieved(bytes32 serverKeyId, bytes serverKeyPublic, uint8 threshold) external;
+	function serverKeyRetrieved(bytes32 serverKeyId, bytes calldata serverKeyPublic, uint8 threshold) external;
 	/// Called when error occurs during server key retrieval.
 	function serverKeyRetrievalError(bytes32 serverKeyId) external;
 
 	/// Get count of pending server key retrieval requests.
-	function serverKeyRetrievalRequestsCount() view external returns (uint256);
+	function serverKeyRetrievalRequestsCount() external view returns (uint256);
 	/// Get server key retrieval request with given index.
 	/// Returns: (serverKeyId)
-	function getServerKeyRetrievalRequest(uint256 index) view external returns (bytes32);
+	function getServerKeyRetrievalRequest(uint256 index) external view returns (bytes32);
 	/// Returs true if response from given keyServer is required.
-	function isServerKeyRetrievalResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool);
+	function isServerKeyRetrievalResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool);
 }
 
 /// Document Key store service contract API (client view).
@@ -85,7 +85,7 @@ interface DocumentKeyStoreServiceClientApi {
 
 	/// Request document key store. Use `secretstore_generateDocumentKey` RPC to generate both
 	/// `commonPoint` and `encryptedPoint`.
-	function storeDocumentKey(bytes32 serverKeyId, bytes commonPoint, bytes encryptedPoint) external payable;
+	function storeDocumentKey(bytes32 serverKeyId, bytes calldata commonPoint, bytes calldata encryptedPoint) external payable;
 }
 
 /// Document Key store service contract API (key server view).
@@ -99,12 +99,12 @@ interface DocumentKeyStoreServiceKeyServerApi {
 	function documentKeyStoreError(bytes32 serverKeyId) external;
 
 	/// Get count of pending document key store requests.
-	function documentKeyStoreRequestsCount() view external returns (uint256);
+	function documentKeyStoreRequestsCount() external view returns (uint256);
 	/// Get document key store request with given index.
 	/// Returns: (serverKeyId, author, commonPoint, encryptedPoint)
-	function getDocumentKeyStoreRequest(uint256 index) view external returns (bytes32, address, bytes, bytes);
+	function getDocumentKeyStoreRequest(uint256 index) external view returns (bytes32, address, bytes memory, bytes memory);
 	/// Returs true if response from given keyServer is required.
-	function isDocumentKeyStoreResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool);
+	function isDocumentKeyStoreResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool);
 }
 
 /// Document Key shadow retrieval service contract API (client view).
@@ -119,7 +119,7 @@ interface DocumentKeyShadowRetrievalServiceClientApi {
 	event DocumentKeyShadowRetrievalError(bytes32 indexed serverKeyId, address indexed requester);
 
 	/// Request document key retrieval.
-	function retrieveDocumentKeyShadow(bytes32 serverKeyId, bytes requesterPublic) external payable;
+	function retrieveDocumentKeyShadow(bytes32 serverKeyId, bytes calldata requesterPublic) external payable;
 }
 
 /// Document Key shadow retrieval service contract API (key server view).
@@ -133,23 +133,23 @@ interface DocumentKeyShadowRetrievalServiceKeyServerApi {
 	function documentKeyCommonRetrieved(
 		bytes32 serverKeyId,
 		address requester,
-		bytes commonPoint,
+		bytes calldata commonPoint,
 		uint8 threshold) external;
 	/// Called when 'personal' data is reported by key server.
 	function documentKeyPersonalRetrieved(
 		bytes32 serverKeyId,
 		address requester,
 		uint256 participants,
-		bytes decryptedSecret,
-		bytes shadow) external;
+		bytes calldata decryptedSecret,
+		bytes calldata shadow) external;
 	/// Called when error occurs during document key shadow retrieval.
 	function documentKeyShadowRetrievalError(bytes32 serverKeyId, address requester) external;
 
 	/// Get count of pending document key shadow retrieval requests.
-	function documentKeyShadowRetrievalRequestsCount() view external returns (uint256);
+	function documentKeyShadowRetrievalRequestsCount() external view returns (uint256);
 	/// Get document key shadow retrieval request with given index.
 	/// Returns: (serverKeyId, requesterPublic, isCommonRetrievalCompleted)
-	function getDocumentKeyShadowRetrievalRequest(uint256 index) view external returns (bytes32, bytes, bool);
+	function getDocumentKeyShadowRetrievalRequest(uint256 index) external view returns (bytes32, bytes memory, bool);
 	/// Returs true if response from given keyServer is required.
-	function isDocumentKeyShadowRetrievalResponseRequired(bytes32 serverKeyId, address keyServer, address requester) view external returns (bool);
+	function isDocumentKeyShadowRetrievalResponseRequired(bytes32 serverKeyId, address keyServer, address requester) external view returns (bool);
 }

@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./SecretStoreService.sol";
 import "./SecretStoreServiceBase.sol";
@@ -47,17 +47,17 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	// === Interface methods ===
 
 	/// We do not support direct payments.
-	function() payable public { revert(); }
+	function() external payable { revert("Direct payment not supported"); }
 
 	/// Retrieve existing server key. Retrieved key will be published via ServerKeyRetrieved or ServerKeyRetrievalError.
 	function retrieveServerKey(bytes32 serverKeyId) external  payable
 		whenFeePaid(serverKeyRetrievalFee)
 	{
 		// check maximum number of requests
-		require(serverKeyRetrievalRequestsKeys.length < maxServerKeyRetrievalRequests);
+		require(serverKeyRetrievalRequestsKeys.length < maxServerKeyRetrievalRequests, "Length should be less");
 
 		ServerKeyRetrievalRequest storage request = serverKeyRetrievalRequests[serverKeyId];
-		require(!request.isActive);
+		require(!request.isActive, "Should not active");
 		deposit();
 
 		// we do not know exact threshold value here && we can not blindly trust the first response
@@ -73,7 +73,7 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	}
 
 	/// Called when retrieval is reported by key server.
-	function serverKeyRetrieved(bytes32 serverKeyId, bytes serverKeyPublic, uint8 threshold) external validPublic(serverKeyPublic) {
+	function serverKeyRetrieved(bytes32 serverKeyId, bytes calldata serverKeyPublic, uint8 threshold) external validPublic(serverKeyPublic) {
 		// check if request still active
 		ServerKeyRetrievalRequest storage request = serverKeyRetrievalRequests[serverKeyId];
 		if (!request.isActive) {
@@ -139,21 +139,19 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	}
 
 	/// Get count of pending server key retrieval requests.
-	function serverKeyRetrievalRequestsCount() view external returns (uint256) {
+	function serverKeyRetrievalRequestsCount() external view returns (uint256) {
 		return serverKeyRetrievalRequestsKeys.length;
 	}
 
 	/// Get server key retrieval request with given index.
 	/// Returns: (serverKeyId)
-	function getServerKeyRetrievalRequest(uint256 index) view external returns (bytes32) {
+	function getServerKeyRetrievalRequest(uint256 index) external view returns (bytes32) {
 		bytes32 serverKeyId = serverKeyRetrievalRequestsKeys[index];
-		return (
-			serverKeyId,
-		);
+		return serverKeyId;
 	}
 
 	/// Returs true if response from given keyServer is required.
-	function isServerKeyRetrievalResponseRequired(bytes32 serverKeyId, address keyServer) view external returns (bool) {
+	function isServerKeyRetrievalResponseRequired(bytes32 serverKeyId, address keyServer) external view returns (bool) {
 		uint8 keyServerIndex = requireKeyServer(keyServer);
 		ServerKeyRetrievalRequest storage request = serverKeyRetrievalRequests[serverKeyId];
 		return isResponseRequired(request.thresholdResponses, keyServerIndex);
@@ -194,11 +192,11 @@ contract SecretStoreServerKeyRetrievalService is SecretStoreServiceBase, ServerK
 	function insertServerKeyRetrievalResponse(
 		ServerKeyRetrievalRequest storage request,
 		uint8 keyServerIndex,
-		bytes serverKeyPublic,
-		uint8 threshold) private returns (ResponseSupport, bytes)
+		bytes memory serverKeyPublic,
+		uint8 threshold) private returns (ResponseSupport, bytes memory)
 	{
 		// insert threshold response
-		bytes32 thresholdResponse = bytes32(threshold);
+		bytes32 thresholdResponse = bytes32(uint(threshold));
 		ResponseSupport thresholdResponseSupport = insertResponse(
 			request.thresholdResponses,
 			keyServerIndex,

@@ -14,7 +14,7 @@
 //! See the License for the specific language governing permissions and
 //! limitations under the License.
 
-pragma solidity ^0.4.18;
+pragma solidity >0.4.99 <0.6.0;
 
 import "./Owned.sol";
 import "./KeyServerSet.sol";
@@ -47,13 +47,13 @@ contract SecretStoreServiceBase is Owned {
 
 	/// Only pass when fee is paid.
 	modifier whenFeePaid(uint256 amount) {
-		require(msg.value >= amount);
+		require(msg.value >= amount, "Not enough value");
 		_;
 	}
 
 	/// Only pass when 'valid' public is passed.
-	modifier validPublic(bytes publicKey) {
-		require(publicKey.length == 64);
+	modifier validPublic(bytes memory publicKey) {
+		require(publicKey.length == 64, "Invalid length");
 		_;
 	}
 
@@ -63,19 +63,19 @@ contract SecretStoreServiceBase is Owned {
 	}
 
 	/// Return number of key servers.
-	function keyServersCount() view public returns (uint8) {
+	function keyServersCount() public view returns (uint8) {
 		return KeyServerSet(keyServerSetAddress).getCurrentKeyServersCount();
 	}
 
 	/// Return index of key server at given address.
-	function requireKeyServer(address keyServer) view public returns (uint8) {
+	function requireKeyServer(address keyServer) public view returns (uint8) {
 		return KeyServerSet(keyServerSetAddress).getCurrentKeyServerIndex(keyServer);
 	}
 
 	/// Drain balance of sender key server.
 	function drain() public {
 		uint256 balance = balances[msg.sender];
-		require(balance != 0);
+		require(balance != 0, "Should not 0");
 		balances[msg.sender] = 0;
 		msg.sender.transfer(balance);
 	}
@@ -96,7 +96,7 @@ contract SecretStoreServiceBase is Owned {
 	}
 
 	/// Returns true if response from given keyServer is required.
-	function isResponseRequired(RequestResponses storage responses, uint8 keyServerIndex) view internal returns (bool) {
+	function isResponseRequired(RequestResponses storage responses, uint8 keyServerIndex) internal view returns (bool) {
 		// if servers set has changed, new response is definitely required
 		uint256 keyServerSetChangeBlock = KeyServerSet(keyServerSetAddress).getCurrentLastChange();
 		if (keyServerSetChangeBlock != responses.keyServerSetChangeBlock) {
